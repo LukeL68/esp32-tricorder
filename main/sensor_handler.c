@@ -1,4 +1,7 @@
 
+#ifndef SENSOR_HANDLER_C
+#define SENSOR_HANDLER_C
+
 #include "driver/gpio.h"
 #include "driver/i2c_master.h"
 #include "bme280.h"
@@ -15,16 +18,23 @@
 #define TAG_BME280 "BME280"
 
 /*
-    BME280 Documentaion
-    The 7-bit device address is 111011x. The 6 MSB bits are fixed. The last bit is changeable by SDO
+    From BME280 Documentation:
+    "The 7-bit device address is 111011x. The 6 MSB bits are fixed. The last bit is changeable by SDO
     value and can be changed during operation. Connecting SDO to GND results in slave address
     1110110 (0x76); connection it to V DDIO results in slave address 1110111 (0x77), which is the same as
     BMP280’s I²C address. The SDO pin cannot be left floating; if left floating, the I²C address will be
-    undefined.
+    undefined.""
 
     In the current wiring, SDO is connected to GND so BME280 i2c address is 0x76
 */
 #define BME280_ADDRESS 0x76
+
+#define SENSOR_PRESSURE_MEAS 0
+#define SENSOR_TEMPERATURE_MEAS 1
+#define SENSOR_HUMIDITY_MEAS 2
+
+static uint32_t measurement_time_us_g;
+static struct bme280_dev bme280_g;
 
 // Initialize and configure i2c parameters for master device
 void sensor_init_i2c_master(i2c_master_bus_handle_t *ptr_bus_handle){
@@ -152,7 +162,8 @@ void sensor_bme280_print_status(int8_t error){
     }
 }
 
-int8_t sensor_bme280_print_measurements(uint32_t measurement_time_us, struct bme280_dev *bme280){
+// 0 for pressure, 1 for temperature, 2 for humidity
+double sensor_bme280_get_measurement(uint8_t measurement_type){
 
     ESP_LOGI(TAG_BME280, "\nReading bme280 measurement:");
 
@@ -162,7 +173,7 @@ int8_t sensor_bme280_print_measurements(uint32_t measurement_time_us, struct bme
 
     // Reading status of the bme280 device to check if measurement is ready
     ESP_LOGI(TAG_BME280, "Reading bme280 status...");
-    bme280_status = bme280_get_regs(BME280_REG_STATUS, &device_status, 1, bme280);
+    bme280_status = bme280_get_regs(BME280_REG_STATUS, &device_status, 1, &bme280_g);
     if(!(device_status & BME280_STATUS_MEAS_DONE)){
         ESP_LOGW(TAG_BME280, "bme280 not ready to read measurement");
         return -1;
@@ -170,12 +181,12 @@ int8_t sensor_bme280_print_measurements(uint32_t measurement_time_us, struct bme
 
     // Delay to ensure measurement is ready even after status says ready
     ESP_LOGI(TAG_BME280, "Delaying before reading...");
-    bme280->delay_us(measurement_time_us, NULL);
+    bme280_g.delay_us(measurement_time_us_g, NULL);
 
 
     // Read measurement from bme280
     ESP_LOGI(TAG_BME280, "Reading measurement...");
-    bme280_status = bme280_get_sensor_data(BME280_ALL, &measurement_data, bme280);
+    bme280_status = bme280_get_sensor_data(BME280_ALL, &measurement_data, &bme280_g);
     if(bme280_status != 0){
         sensor_bme280_print_status(bme280_status);
         ESP_LOGE(TAG_BME280, "Could not read measurement from bme280 sensor");
@@ -187,25 +198,16 @@ int8_t sensor_bme280_print_measurements(uint32_t measurement_time_us, struct bme
     ESP_LOGI(TAG_BME280, "Pressure: %.2f hPa", measurement_data.pressure / 100.0);
     ESP_LOGI(TAG_BME280, "Humidity: %.2f %%RH", measurement_data.humidity);
 
-    return 0;
-}
-
-// Returns 0 for not ready and 1 for ready
-bool sensor_bme280_measurement_ready(){
-    int8_t bme280_status;
-    uint8_t device_status;
-
-    // Reading status of the bme280 device to check if measurement is ready
-    ESP_LOGI(TAG_BME280, "Reading bme280 status...");
-    bme280_status = bme280_get_regs(BME280_REG_STATUS, &device_status, 1, bme280);
-    if(!(device_status & BME280_STATUS_MEAS_DONE)){
-        ESP_LOGW(TAG_BME280, "bme280 not ready to read measurement");
-        return -1;
+    switch(measurement_type){
+        case SENSOR_PRESSURE_MEAS:
+            return measurement_data.pressure;
+        case SENSOR_TEMPERATURE_MEAS:
+            return measurement_data.temperature;
+        case SENSOR_HUMIDITY_MEAS:
+            return measurement_data.humidity;
+        default:
+            return 0;
     }
-}
-
-double sensor_bme280_read_temperature(){
-
 }
 
 int sensor_init(){
@@ -298,5 +300,10 @@ int sensor_init(){
     }
     ESP_LOGI(TAG_BME280, "Measurement time is %lu microseconds\n", measurement_time_us);
 
+    measurement_time_us_g = measurement_time_us;
+    bme280_g = bme280;
+
     return 0;
 }
+
+#endif

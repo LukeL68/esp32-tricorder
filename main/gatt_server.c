@@ -1,10 +1,15 @@
 
+#ifndef GATT_SERVER_C
+#define GATT_SERVER_C
+
 #include "esp_log.h"
 
 #include "host/ble_hs.h"
 #include "host/ble_uuid.h"
 #include "services/gatt/ble_svc_gatt.h"
 #include "services/gap/ble_svc_gap.h"
+
+#include "sensor_handler.c"
 
 // GATT server tag
 #define TAG_GATTS "GATTS"
@@ -43,6 +48,8 @@ static int gattserver_access_pressure_cb(uint16_t conn_handle, uint16_t attr_han
 
     switch(ctxt->op){
         case BLE_GATT_ACCESS_OP_READ_CHR:
+            double raw_pressure_val = sensor_bme280_get_measurement(SENSOR_PRESSURE_MEAS);
+            gattserver_pressure_val = (int)(raw_pressure_val);
             ESP_LOGI(TAG_GATTS, "Transmitting pressure value: %lu Pa", gattserver_pressure_val);
             status = os_mbuf_append(ctxt->om, &gattserver_pressure_val, sizeof(gattserver_pressure_val));
             if(status != 0){
@@ -72,6 +79,8 @@ static int gattserver_access_temperature_cb(uint16_t conn_handle, uint16_t attr_
 
     switch(ctxt->op){
         case BLE_GATT_ACCESS_OP_READ_CHR:
+            double raw_temperature_val = sensor_bme280_get_measurement(SENSOR_TEMPERATURE_MEAS);
+            gattserver_temperature_val = (int)(raw_temperature_val*100);
             ESP_LOGI(TAG_GATTS, "Transmitting temperature value: %d °C", gattserver_temperature_val/100);
             status = os_mbuf_append(ctxt->om, &gattserver_temperature_val, sizeof(gattserver_temperature_val));
             if(status != 0){
@@ -102,6 +111,8 @@ static int gattserver_access_humidity_cb(uint16_t conn_handle, uint16_t attr_han
 
     switch(ctxt->op){
         case BLE_GATT_ACCESS_OP_READ_CHR:
+            double raw_humidity_val = sensor_bme280_get_measurement(SENSOR_HUMIDITY_MEAS);
+            gattserver_humidity_val = (int)(raw_humidity_val*100);
             ESP_LOGI(TAG_GATTS, "Transmitting humidity value: %d%%", gattserver_humidity_val/100);
             status = os_mbuf_append(ctxt->om, &gattserver_humidity_val, sizeof(gattserver_humidity_val));
             if(status != 0){
@@ -175,3 +186,5 @@ int gattserver_init(){
 
     return 0;
 }
+
+#endif
