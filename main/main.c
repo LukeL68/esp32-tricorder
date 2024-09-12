@@ -19,6 +19,7 @@
 // #include "host/util/util.h"
 
 #include "gatt_server.c"
+#include "sensor_handler.c"
 
 // Logging tags
 #define TAG_INIT "Initialization"
@@ -236,6 +237,14 @@ void app_ble_main_task(void *param){
 
 void app_main(void){
     int status;
+
+    // Initializing sensor
+    ESP_LOGI(TAG_INIT, "Initializing sensors...");
+    status = sensor_init();
+    if(status != 0){
+        ESP_LOGE(TAG_INIT, "Error in %s: 0x%x (%s)", __func__, status, esp_err_to_name(status));
+        return;
+    }
 
     // Initializing non-volatile storage library to store BLE configuration data
 
