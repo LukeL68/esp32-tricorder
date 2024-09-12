@@ -18,6 +18,8 @@
 #include "services/gap/ble_svc_gap.h"
 // #include "host/util/util.h"
 
+#include "gatt_server.c"
+
 // Logging tags
 #define TAG_INIT "Initialization"
 #define TAG_BLE "BLE"
@@ -268,6 +270,13 @@ void app_main(void){
     // Set the BLE device name
     ESP_LOGI(TAG_INIT, "Setting device name...");
     status = ble_svc_gap_device_name_set("ESP32-NimBLE-Test");
+    if(status != 0) { 
+        ESP_LOGE(TAG_INIT, "Error in %s: 0x%x", __func__,  status); 
+        return; 
+    }
+
+    ESP_LOGI(TAG_INIT, "Initializing GATT server...");
+    status = gattserver_init();
     if(status != 0) { 
         ESP_LOGE(TAG_INIT, "Error in %s: 0x%x", __func__,  status); 
         return; 
