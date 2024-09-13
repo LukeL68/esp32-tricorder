@@ -1,6 +1,6 @@
 # ESP32 Environment Data Recorder ("Tricorder")
 
-Transmits environment data (pressure, temperature, humidity) over BLE using a BME280 sensor connected to and ESP32 microcontroller via I2C. Note that in this project the I2C connection uses GPIO pins 21 (SDA) and 22 (SCL) on the ESP32 development board, and that the SDO pin on the BME280 is grounded, making the I2C address of the sensor 0x76.
+Transmits environment data (pressure, temperature, humidity) over BLE using a BME280 sensor connected to an ESP32 microcontroller via I2C. Note that in this project the I2C connection uses GPIO pins 21 (SDA) and 22 (SCL) on the ESP32 development board. Also, the SDO pin on the BME280 is grounded, making the I2C address of the BME280 0x76.
 
 ### Setup
 1. Install and set up the ESP-IDF extension for VSCode
