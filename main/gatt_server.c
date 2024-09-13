@@ -40,6 +40,8 @@ static int gattserver_access_pressure_cb(uint16_t conn_handle, uint16_t attr_han
     switch(ctxt->op){
         case BLE_GATT_ACCESS_OP_READ_CHR:
             double raw_pressure_val = sensor_bme280_get_pressure();
+
+            // NaN value indicates error reading from sensor
             if(isnan(raw_pressure_val)) { return BLE_ATT_ERR_UNLIKELY; }\
 
             // BLE standard pressure value in units of Pascals (1 Pa)
@@ -75,6 +77,8 @@ static int gattserver_access_temperature_cb(uint16_t conn_handle, uint16_t attr_
     switch(ctxt->op){
         case BLE_GATT_ACCESS_OP_READ_CHR:
             double raw_temperature_val = sensor_bme280_get_temperature();
+
+            // NaN value indicates error reading from sensor
             if(isnan(raw_temperature_val)) { return BLE_ATT_ERR_UNLIKELY; }
 
             // BLE standard temperature value in units of hundredths of a degree C (0.01°C)
@@ -111,6 +115,8 @@ static int gattserver_access_humidity_cb(uint16_t conn_handle, uint16_t attr_han
     switch(ctxt->op){
         case BLE_GATT_ACCESS_OP_READ_CHR:
             double raw_humidity_val = sensor_bme280_get_humidity();
+
+            // NaN value indicates error reading from sensor
             if(isnan(raw_humidity_val)) { return BLE_ATT_ERR_UNLIKELY; }
 
             // BLE standard humidity value in units of hundredeths of relative humidity percentage (0.01%)

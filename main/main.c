@@ -119,6 +119,7 @@ void app_print_conn_update(const struct ble_gap_upd_params *update_parameters){
     ESP_LOGI(TAG_BLE, "Maximum connection event length..........%d (%.3f ms)", update_parameters->max_ce_len, update_parameters->max_ce_len * 0.625);
 }
 
+// GAP event callback
 int app_ble_on_gap_event(struct ble_gap_event *event, void *arg){
     ESP_LOGI(TAG_BLE, "GAP event type 0x%x", event->type);
 
@@ -215,7 +216,6 @@ void app_ble_start_advertising(){
     }
 }
 
-
 // Callback when BLE stack synchronizes (is ready to start)
 void app_ble_on_sync(){
 
@@ -226,6 +226,7 @@ void app_ble_on_sync(){
     app_ble_start_advertising();
 }
 
+// Task to run NimBLE stack
 void app_ble_main_task(void *param){
 
     ESP_LOGI(TAG_BLE, "NimBLE host task started");
@@ -234,7 +235,6 @@ void app_ble_main_task(void *param){
 
     nimble_port_freertos_deinit();
 }
-
 
 void app_main(void){
     int status;

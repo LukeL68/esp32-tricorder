@@ -158,7 +158,7 @@ void sensor_bme280_print_status(int8_t error){
     }
 }
 
-// General helper function to return measurement data from bme280 containing pressure, temperature, and humidity
+// Function to return measurement data from bme280 containing pressure, temperature, and humidity
 int sensor_bme280_get_measurements(struct bme280_data *measurement_data){
 
     ESP_LOGI(TAG_BME280, "Reading bme280 measurement");
@@ -197,6 +197,7 @@ int sensor_bme280_get_measurements(struct bme280_data *measurement_data){
 }
 
 // Returns pressure in Pascals, or NAN if there was an error reading the value
+// Wrapper function for sensor_bme280_get_measurements that returns only the pressure value
 double sensor_bme280_get_pressure(){
     int status;
     struct bme280_data measurement_data;
@@ -206,6 +207,7 @@ double sensor_bme280_get_pressure(){
 }
 
 // Returns temperature in degrees C, or NAN if there was an error reading the value
+// Wrapper function for sensor_bme280_get_measurements that returns only the temperature value
 double sensor_bme280_get_temperature(){
     int status;
     struct bme280_data measurement_data;
@@ -215,6 +217,7 @@ double sensor_bme280_get_temperature(){
 }
 
 // Returns humidity in % relative humidity, or NAN if there was an error reading the value
+// Wrapper function for sensor_bme280_get_measurements that returns only the humidity value
 double sensor_bme280_get_humidity(){
     int status;
     struct bme280_data measurement_data;
