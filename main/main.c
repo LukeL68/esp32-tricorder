@@ -279,7 +279,7 @@ void app_main(void){
 
     // Set the BLE device name
     ESP_LOGI(TAG_INIT, "Setting device name...");
-    status = ble_svc_gap_device_name_set("ESP32-NimBLE-Test");
+    status = ble_svc_gap_device_name_set("ESP32-Tricorder");
     if(status != 0) { 
         ESP_LOGE(TAG_INIT, "Error in %s: 0x%x", __func__,  status); 
         return; 

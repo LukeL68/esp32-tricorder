@@ -26,15 +26,6 @@ static uint16_t gattserver_pressure_chr_val_handle;
 static uint16_t gattserver_temperature_chr_val_handle;
 static uint16_t gattserver_humidity_chr_val_handle;
 
-// BLE standard pressure value in units of Pascals (1 Pa)
-uint32_t gattserver_pressure_val = 101325;
-
-// BLE standard temperature value in units of hundredths of a degree C (0.01°C)
-int16_t gattserver_temperature_val = -508;
-
-// BLE standard humidity value in units of hundredeths of relative humidity percentage (0.01%)
-uint16_t gattserver_humidity_val = 3472;
-
 // Callback for accessing (reading) pressure characteristic
 static int gattserver_access_pressure_cb(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg){
     ESP_LOGI(TAG_GATTS, "Accessing pressure characteristic");
@@ -48,10 +39,14 @@ static int gattserver_access_pressure_cb(uint16_t conn_handle, uint16_t attr_han
 
     switch(ctxt->op){
         case BLE_GATT_ACCESS_OP_READ_CHR:
-            double raw_pressure_val = sensor_bme280_get_measurement(SENSOR_PRESSURE_MEAS);
-            gattserver_pressure_val = (int)(raw_pressure_val);
-            ESP_LOGI(TAG_GATTS, "Transmitting pressure value: %lu Pa", gattserver_pressure_val);
-            status = os_mbuf_append(ctxt->om, &gattserver_pressure_val, sizeof(gattserver_pressure_val));
+            double raw_pressure_val = sensor_bme280_get_pressure();
+            if(isnan(raw_pressure_val)) { return BLE_ATT_ERR_UNLIKELY; }\
+
+            // BLE standard pressure value in units of Pascals (1 Pa)
+            uint32_t pressure_val = (uint32_t)(round(raw_pressure_val));
+
+            ESP_LOGI(TAG_GATTS, "Transmitting pressure value (units of 1 Pa): %lu", pressure_val);
+            status = os_mbuf_append(ctxt->om, &pressure_val, sizeof(pressure_val));
             if(status != 0){
                 ESP_LOGE(TAG_GATTS, "Unable to append pressure value to the output memory buffer");
                 return BLE_ATT_ERR_INSUFFICIENT_RES;
@@ -79,10 +74,14 @@ static int gattserver_access_temperature_cb(uint16_t conn_handle, uint16_t attr_
 
     switch(ctxt->op){
         case BLE_GATT_ACCESS_OP_READ_CHR:
-            double raw_temperature_val = sensor_bme280_get_measurement(SENSOR_TEMPERATURE_MEAS);
-            gattserver_temperature_val = (int)(raw_temperature_val*100);
-            ESP_LOGI(TAG_GATTS, "Transmitting temperature value: %d °C", gattserver_temperature_val/100);
-            status = os_mbuf_append(ctxt->om, &gattserver_temperature_val, sizeof(gattserver_temperature_val));
+            double raw_temperature_val = sensor_bme280_get_temperature();
+            if(isnan(raw_temperature_val)) { return BLE_ATT_ERR_UNLIKELY; }
+
+            // BLE standard temperature value in units of hundredths of a degree C (0.01°C)
+            int16_t temperature_val = (int16_t)(round(raw_temperature_val * 100));
+
+            ESP_LOGI(TAG_GATTS, "Transmitting temperature value (units of 0.01°C): %d", temperature_val);
+            status = os_mbuf_append(ctxt->om, &temperature_val, sizeof(temperature_val));
             if(status != 0){
                 ESP_LOGE(TAG_GATTS, "Unable to append temperature value to the output memory buffer");
                 return BLE_ATT_ERR_INSUFFICIENT_RES;
@@ -111,10 +110,14 @@ static int gattserver_access_humidity_cb(uint16_t conn_handle, uint16_t attr_han
 
     switch(ctxt->op){
         case BLE_GATT_ACCESS_OP_READ_CHR:
-            double raw_humidity_val = sensor_bme280_get_measurement(SENSOR_HUMIDITY_MEAS);
-            gattserver_humidity_val = (int)(raw_humidity_val*100);
-            ESP_LOGI(TAG_GATTS, "Transmitting humidity value: %d%%", gattserver_humidity_val/100);
-            status = os_mbuf_append(ctxt->om, &gattserver_humidity_val, sizeof(gattserver_humidity_val));
+            double raw_humidity_val = sensor_bme280_get_humidity();
+            if(isnan(raw_humidity_val)) { return BLE_ATT_ERR_UNLIKELY; }
+
+            // BLE standard humidity value in units of hundredeths of relative humidity percentage (0.01%)
+            uint16_t humidity_val = (uint16_t)(round(raw_humidity_val*100));
+
+            ESP_LOGI(TAG_GATTS, "Transmitting humidity value (units of 0.01%%): %d", humidity_val);
+            status = os_mbuf_append(ctxt->om, &humidity_val, sizeof(humidity_val));
             if(status != 0){
                 ESP_LOGE(TAG_GATTS, "Unable to append humidity value to the output memory buffer");
                 return BLE_ATT_ERR_INSUFFICIENT_RES;

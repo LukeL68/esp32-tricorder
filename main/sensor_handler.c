@@ -9,6 +9,7 @@
 #include <rom/ets_sys.h>
 #include <string.h>
 #include <stdbool.h>
+#include <math.h>
 
 // Pin definitions for SDA and SCL lines
 #define SDA_PIN GPIO_NUM_21
@@ -28,10 +29,6 @@
     In the current wiring, SDO is connected to GND so BME280 i2c address is 0x76
 */
 #define BME280_ADDRESS 0x76
-
-#define SENSOR_PRESSURE_MEAS 0
-#define SENSOR_TEMPERATURE_MEAS 1
-#define SENSOR_HUMIDITY_MEAS 2
 
 static uint32_t measurement_time_us_g;
 static struct bme280_dev bme280_g;
@@ -69,11 +66,10 @@ int8_t sensor_bme280_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t len,
 
     /*  
         BME280 Documentation
-        To be able to read registers, first the register address must be sent in write mode (slave address
+        "To be able to read registers, first the register address must be sent in write mode (slave address
         111011X0). Then either a stop or a repeated start condition must be generated. After this the slave is
         addressed in read mode (RW = ‘1’) at address 111011X1, after which the slave sends out data from
-        auto-incremented register addresses until a NOACKM and stop condition occurs. This is depicted in
-        Figure 10, where register 0xF6 and 0xF7 are read.
+        auto-incremented register addresses until a NOACKM and stop condition occurs."
     */
 
     //ESP_LOGI(TAG_BME280, "Performing i2c read on register 0x%x (%lu bytes)", reg_addr, len);
@@ -96,9 +92,9 @@ int8_t sensor_bme280_i2c_write(uint8_t reg_addr, const uint8_t *reg_data, uint32
 
     /*
         BME280 Documentation
-        Writing is done by sending the slave address in write mode (RW = ‘0’), resulting in slave address
+        "Writing is done by sending the slave address in write mode (RW = ‘0’), resulting in slave address
         111011X0 (‘X’ is determined by state of SDO pin. Then the master sends pairs of register addresses
-        and register data. The transaction is ended by a stop condition.
+        and register data. The transaction is ended by a stop condition."
     */
 
     //ESP_LOGI(TAG_BME280, "Performing i2c write on register 0x%x (%lu bytes)", reg_addr, len);
@@ -130,7 +126,7 @@ void sensor_bme280_i2c_delay(uint32_t period, void *intf_ptr){
     ESP_LOGI(TAG_BME280, "Delaying for %lu microseconds", period);
 
     // Period is given in microseconds.
-    // Using ROM ets_delay_us to be able to set very short microseconds delays that are not possible with RTOS vTaskDelay
+    // Using ROM ets_delay_us to be able to set very short microseconds delays that are not possible with FreeRTOS vTaskDelay
     ets_delay_us(period);
 }
 
@@ -162,20 +158,19 @@ void sensor_bme280_print_status(int8_t error){
     }
 }
 
-// 0 for pressure, 1 for temperature, 2 for humidity
-double sensor_bme280_get_measurement(uint8_t measurement_type){
+// General helper function to return measurement data from bme280 containing pressure, temperature, and humidity
+int sensor_bme280_get_measurements(struct bme280_data *measurement_data){
 
-    ESP_LOGI(TAG_BME280, "\nReading bme280 measurement:");
+    ESP_LOGI(TAG_BME280, "Reading bme280 measurement");
 
     int8_t bme280_status;
     uint8_t device_status;
-    struct bme280_data measurement_data;
 
     // Reading status of the bme280 device to check if measurement is ready
     ESP_LOGI(TAG_BME280, "Reading bme280 status...");
     bme280_status = bme280_get_regs(BME280_REG_STATUS, &device_status, 1, &bme280_g);
     if(!(device_status & BME280_STATUS_MEAS_DONE)){
-        ESP_LOGW(TAG_BME280, "bme280 not ready to read measurement");
+        ESP_LOGE(TAG_BME280, "bme280 not ready to read measurement");
         return -1;
     }
 
@@ -186,28 +181,46 @@ double sensor_bme280_get_measurement(uint8_t measurement_type){
 
     // Read measurement from bme280
     ESP_LOGI(TAG_BME280, "Reading measurement...");
-    bme280_status = bme280_get_sensor_data(BME280_ALL, &measurement_data, &bme280_g);
+    bme280_status = bme280_get_sensor_data(BME280_ALL, measurement_data, &bme280_g);
     if(bme280_status != 0){
         sensor_bme280_print_status(bme280_status);
         ESP_LOGE(TAG_BME280, "Could not read measurement from bme280 sensor");
-        return bme280_status;
+        return -1;
     }
 
 
-    ESP_LOGI(TAG_BME280, "Temperature: %.2f °C", measurement_data.temperature);
-    ESP_LOGI(TAG_BME280, "Pressure: %.2f hPa", measurement_data.pressure / 100.0);
-    ESP_LOGI(TAG_BME280, "Humidity: %.2f %%RH", measurement_data.humidity);
+    ESP_LOGI(TAG_BME280, "Temperature: %.2f °C", measurement_data->temperature);
+    ESP_LOGI(TAG_BME280, "Pressure: %.2f hPa", measurement_data->pressure / 100.0);
+    ESP_LOGI(TAG_BME280, "Humidity: %.2f %%RH", measurement_data->humidity);
 
-    switch(measurement_type){
-        case SENSOR_PRESSURE_MEAS:
-            return measurement_data.pressure;
-        case SENSOR_TEMPERATURE_MEAS:
-            return measurement_data.temperature;
-        case SENSOR_HUMIDITY_MEAS:
-            return measurement_data.humidity;
-        default:
-            return 0;
-    }
+    return 0;
+}
+
+// Returns pressure in Pascals, or NAN if there was an error reading the value
+double sensor_bme280_get_pressure(){
+    int status;
+    struct bme280_data measurement_data;
+    status = sensor_bme280_get_measurements(&measurement_data);
+    if(status != 0){ return NAN; }
+    return measurement_data.pressure;
+}
+
+// Returns temperature in degrees C, or NAN if there was an error reading the value
+double sensor_bme280_get_temperature(){
+    int status;
+    struct bme280_data measurement_data;
+    status = sensor_bme280_get_measurements(&measurement_data);
+    if(status != 0){ return NAN; }
+    return measurement_data.temperature;
+}
+
+// Returns humidity in % relative humidity, or NAN if there was an error reading the value
+double sensor_bme280_get_humidity(){
+    int status;
+    struct bme280_data measurement_data;
+    status = sensor_bme280_get_measurements(&measurement_data);
+    if(status != 0){ return NAN; }
+    return measurement_data.humidity;
 }
 
 int sensor_init(){
