@@ -30,6 +30,7 @@ static uint16_t gattserver_humidity_chr_val_handle;
 static int gattserver_access_pressure_cb(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg){
     ESP_LOGI(TAG_GATTS, "Accessing pressure characteristic");
 
+    // This should never occur, as it would indicate that the stack called the incorrect callback for the access request
     if(attr_handle != gattserver_pressure_chr_val_handle){
         ESP_LOGE(TAG_GATTS, "Incorrect attribute handle passed to pressure access callback");
         return BLE_ATT_ERR_INVALID_HANDLE;
@@ -55,6 +56,7 @@ static int gattserver_access_pressure_cb(uint16_t conn_handle, uint16_t attr_han
             }
             break;
         default:
+            // Only reads are allowed for environmental data characteristics
             ESP_LOGW(TAG_GATTS, "Unsupported access operation 0x%x", ctxt->op);
             return BLE_ATT_ERR_REQ_NOT_SUPPORTED;
     }
@@ -67,6 +69,7 @@ static int gattserver_access_pressure_cb(uint16_t conn_handle, uint16_t attr_han
 static int gattserver_access_temperature_cb(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg){
     ESP_LOGI(TAG_GATTS, "Accessing temperature characteristic");
 
+    // This should never occur, as it would indicate that the stack called the incorrect callback for the access request
     if(attr_handle != gattserver_temperature_chr_val_handle){
         ESP_LOGE(TAG_GATTS, "Incorrect attribute handle passed to temperature access callback");
         return BLE_ATT_ERR_INVALID_HANDLE;
@@ -92,6 +95,7 @@ static int gattserver_access_temperature_cb(uint16_t conn_handle, uint16_t attr_
             }
             break;
         default:
+            // Only reads are allowed for environmental data characteristics
             ESP_LOGW(TAG_GATTS, "Unsupported access operation 0x%x", ctxt->op);
             return BLE_ATT_ERR_REQ_NOT_SUPPORTED;
     }
@@ -102,8 +106,9 @@ static int gattserver_access_temperature_cb(uint16_t conn_handle, uint16_t attr_
 
 // Callback for accessing (reading) humidity characteristic
 static int gattserver_access_humidity_cb(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt, void *arg){
-    ESP_LOGI(TAG_GATTS, "Accessing pressure characteristic");
+    ESP_LOGI(TAG_GATTS, "Accessing humidity characteristic");
 
+    // This should never occur, as it would indicate that the stack called the incorrect callback for the access request
     if(attr_handle != gattserver_humidity_chr_val_handle){
         ESP_LOGE(TAG_GATTS, "Incorrect attribute handle passed to humidity access callback");
         return BLE_ATT_ERR_INVALID_HANDLE;
@@ -129,6 +134,7 @@ static int gattserver_access_humidity_cb(uint16_t conn_handle, uint16_t attr_han
             }
             break;
         default:
+            // Only reads are allowed for environmental data characteristics
             ESP_LOGW(TAG_GATTS, "Unsupported access operation 0x%x", ctxt->op);
             return BLE_ATT_ERR_REQ_NOT_SUPPORTED;
     }
