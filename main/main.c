@@ -7,17 +7,11 @@
 #include "esp_system.h"
 #include "esp_log.h"
 
-// Using NimBLE since the app only uses BLE
-// https://github.com/espressif/esp-idf/blob/master/examples/bluetooth/nimble/bleprph/main/main.c 
-// https://stackoverflow.com/questions/64474502/how-do-you-build-a-ble-app-when-you-dont-have-access-to-the-official-gatt-xml-f 
-// https://mynewt.apache.org/latest/network/ble_hs/ble_hs.html
-
 #include "nimble/nimble_port.h"
 #include "nimble/nimble_port_freertos.h"
 #include "host/util/util.h"
 #include "host/ble_hs.h"
 #include "services/gap/ble_svc_gap.h"
-// #include "host/util/util.h"
 
 #include "gatt_server.c"
 #include "sensor_handler.c"
@@ -30,7 +24,7 @@ static uint8_t address_type;
 
 // Callback when the BLE stack resets
 void app_ble_on_reset(int reason){
-
+    ESP_LOGW(TAG_BLE, "BLE stack reset: reason = %d", reason);
 }
 
 void app_ble_configure_address(){
@@ -248,7 +242,6 @@ void app_main(void){
     }
 
     // Initializing non-volatile storage library to store BLE configuration data
-
     // Erase and reinitialize if NVS has new version or is full
     ESP_LOGI(TAG_INIT, "Initializing NVS...");
     status = nvs_flash_init();

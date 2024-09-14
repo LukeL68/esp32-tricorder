@@ -2,14 +2,16 @@
 #ifndef SENSOR_HANDLER_C
 #define SENSOR_HANDLER_C
 
+#include <stdbool.h>
+#include <string.h>
+#include <rom/ets_sys.h>
+#include <math.h>
+
+#include "esp_log.h"
+
 #include "driver/gpio.h"
 #include "driver/i2c_master.h"
 #include "bme280.h"
-#include "esp_log.h"
-#include <rom/ets_sys.h>
-#include <string.h>
-#include <stdbool.h>
-#include <math.h>
 
 // Pin definitions for SDA and SCL lines
 #define SDA_PIN GPIO_NUM_21
@@ -77,7 +79,7 @@ int8_t sensor_bme280_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t len,
     // The passed interface pointer is the esp i2c device handle for the bme280
     i2c_master_dev_handle_t bme280_handle = (i2c_master_dev_handle_t)intf_ptr;
 
-    // Using transmit + receive function because the register address must be written to the bm280 sensor before reading from it
+    // Using transmit + receive function because the register address must be written to the bme280 sensor before reading from it
     // reg_addr is the only data that will be written, so its address can act as the write buffer pointer with length 1
     // Setting -1 as timeout to wait forever for operation to complete
     esp_err_t status = i2c_master_transmit_receive(bme280_handle, &reg_addr, 1, reg_data, len, -1);
