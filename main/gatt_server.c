@@ -98,7 +98,6 @@ static int gattserver_access_temperature_cb(uint16_t conn_handle, uint16_t attr_
 
     ESP_LOGI(TAG_GATTS, "Access operation completed");
     return 0;
-
 }
 
 // Callback for accessing (reading) humidity characteristic
@@ -136,7 +135,6 @@ static int gattserver_access_humidity_cb(uint16_t conn_handle, uint16_t attr_han
 
     ESP_LOGI(TAG_GATTS, "Access operation completed");
     return 0;
-
 }
 
 // Definition of environmental sensing service structure
@@ -161,7 +159,7 @@ static const struct ble_gatt_svc_def gattserver_services[] = {
                 .val_handle = &gattserver_temperature_chr_val_handle,
             },
             {
-                // Temperature characteristic
+                // Humidity characteristic
                 .uuid = &gattserver_humidity_chr_uuid.u,
                 .access_cb = gattserver_access_humidity_cb,
                 .flags = BLE_GATT_CHR_F_READ,
@@ -177,16 +175,18 @@ int gattserver_init(){
 
     int status;
     
-    // Initialize GAP qnd GATT services on the server
+    // Initialize GAP and GATT services on the server
     ble_svc_gap_init();
     ble_svc_gatt_init();
 
+    // Counts the declared services and reserves the necessary resources
     status = ble_gatts_count_cfg(gattserver_services);
     if(status != 0){
         ESP_LOGE(TAG_GATTS, "Could not count service resources during GATT intialization");
         return status;
     }
 
+    // Adds the declared services to the GATT server
     status = ble_gatts_add_svcs(gattserver_services);
     if(status != 0){
         ESP_LOGE(TAG_GATTS, "Could not add services during GATT intialization");
