@@ -9,6 +9,8 @@
 
 #include "sensor_handler.h"
 
+#include "gatt_server.h"
+
 // GATT server tag
 #define TAG_GATTS "GATTS"
 

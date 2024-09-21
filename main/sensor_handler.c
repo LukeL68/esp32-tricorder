@@ -10,6 +10,8 @@
 #include "driver/i2c_master.h"
 #include "bme280.h"
 
+#include "sensor_handler.h"
+
 // Pin definitions for SDA and SCL lines
 #define SDA_PIN GPIO_NUM_21
 #define SCL_PIN GPIO_NUM_22
