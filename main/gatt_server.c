@@ -1,15 +1,13 @@
 
-#ifndef GATT_SERVER_C
-#define GATT_SERVER_C
-
 #include "esp_log.h"
 
 #include "host/ble_hs.h"
 #include "host/ble_uuid.h"
 #include "services/gatt/ble_svc_gatt.h"
 #include "services/gap/ble_svc_gap.h"
+#include <math.h>
 
-#include "sensor_handler.c"
+#include "sensor_handler.h"
 
 // GATT server tag
 #define TAG_GATTS "GATTS"
@@ -201,5 +199,3 @@ int gattserver_init(){
 
     return 0;
 }
-
-#endif

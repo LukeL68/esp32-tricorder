@@ -1,7 +1,4 @@
 
-#ifndef SENSOR_HANDLER_C
-#define SENSOR_HANDLER_C
-
 #include <stdbool.h>
 #include <string.h>
 #include <rom/ets_sys.h>
@@ -323,5 +320,3 @@ int sensor_init(){
 
     return 0;
 }
-
-#endif

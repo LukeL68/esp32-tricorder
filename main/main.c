@@ -13,8 +13,8 @@
 #include "host/ble_hs.h"
 #include "services/gap/ble_svc_gap.h"
 
-#include "gatt_server.c"
-#include "sensor_handler.c"
+#include "gatt_server.h"
+#include "sensor_handler.h"
 
 // Logging tags
 #define TAG_INIT "Initialization"
