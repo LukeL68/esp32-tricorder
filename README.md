@@ -1,6 +1,6 @@
-# ESP32 Environment Data Recorder ("Tricorder")
+# ESP32 Bluetooth Environment Data Reader ("Tricorder")
 
-Transmits environment data (pressure, temperature, humidity) over BLE using a BME280 sensor connected to an ESP32 microcontroller via I2C.
+Transmits environment data (pressure, temperature, humidity) over BLE using a BME280 sensor connected to an ESP32 microcontroller via I2C. The NimBLE stack is used instead of the default Bluedroid stack because it supports only BLE (not Bluetooth Classic), making it more memory-efficient and requiring less code to implement.
 
 ### Wiring
 
